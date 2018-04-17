@@ -1,4 +1,4 @@
-（改编自https://github.com/chenyuntc/pytorch-book/tree/master/chapter9-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%86%99%E8%AF%97(CharRNN)）
+（改编自https://github.com/chenyuntc/pytorch-book/tree/master/chapter9-%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C%E5%86%99%E8%AF%97(CharRNN)  ）
 
 这是电子工业出版社的《深度学习框架PyTorch：入门与实践》第九章的配套代码，利用PyTorch实现了CharRNN用以写唐诗。
 
