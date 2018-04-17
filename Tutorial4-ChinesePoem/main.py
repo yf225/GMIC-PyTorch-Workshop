@@ -158,6 +158,8 @@ def train(**kwargs):
 
             loss_meter.add(loss.item())
 
+        print("Epoch: ", epoch, ", Loss: ", loss_meter.value()[0])
+
         t.save(model.state_dict(), '%s_%s.pth' % (opt.model_prefix, epoch))
 
 
