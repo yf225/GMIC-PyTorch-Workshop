@@ -160,7 +160,7 @@ def train(**kwargs):
 
         print("Epoch: ", epoch, ", Loss: ", loss_meter.value()[0])
 
-        t.save(model.state_dict(), '%s_%s.pth' % (opt.model_prefix, epoch))
+        t.save(model.state_dict(), '%s_loss_%s_epoch_%s.pth' % (opt.model_prefix, loss_meter.value()[0], epoch))
 
 
 def gen(**kwargs):
