@@ -31,7 +31,7 @@ parser.add_argument('--batch-size', type=int, default=64, metavar='N',
                     help='input batch size for training (default: 64)')
 parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
                     help='input batch size for testing (default: 1000)')
-parser.add_argument('--epochs', type=int, default=20, metavar='N',
+parser.add_argument('--epochs', type=int, default=100, metavar='N',
                     help='number of epochs to train (default: 10)')
 parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
                     help='learning rate (default: 0.01)')
@@ -52,8 +52,10 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 model = MNISTNet()
-pretrained_model_path = args.mnist_pretrained_model
-model.load_state_dict(torch.load(pretrained_model_path))
+
+# pretrained_model_path = args.mnist_pretrained_model
+# model.load_state_dict(torch.load(pretrained_model_path))
+
 if args.cuda:
     model.cuda()
 
@@ -87,7 +89,12 @@ test_loader = torch.utils.data.DataLoader(
 
 model.fc2 = nn.Linear(50, 10)
 
-optimizer = optim.SGD(model.fc2.parameters(), lr=args.lr, momentum=args.momentum)
+# optimizer = optim.SGD(model.fc2.parameters(), lr=args.lr, momentum=args.momentum) # Tune only the last layer
+optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum) # Tune the whole model
+
+# No transfer learning: best accuracy?
+# Transfer learning with tuning only last layer: best accuracy?
+# Transfer learning with tuning all layers: best accuracy?
 
 def train(epoch):
     model.train()
