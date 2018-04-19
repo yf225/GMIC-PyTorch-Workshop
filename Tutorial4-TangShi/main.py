@@ -16,7 +16,6 @@ class Config(object):
     category = 'poet.tang'  # 类别，唐诗还是宋诗歌(poet.song)
     lr = 1e-3
     weight_decay = 1e-4
-    use_gpu = True
     epoch = 20
     batch_size = 128
     maxlen = 125  # 超过这个长度的之后字被丢弃，小于这个长度的在前面补空格
@@ -43,7 +42,6 @@ def generate(model, start_words, ix2word, word2ix, theme_words=None):
     start_word_len = len(start_words)
     # 手动设置第一个词为<START>
     input = t.Tensor([word2ix['<START>']]).view(1, 1).long()
-    if opt.use_gpu: input = input.cuda()
     hidden = None
 
     if theme_words:
@@ -81,7 +79,6 @@ def gen_acrostic(model, start_words, ix2word, word2ix, theme_words=None):
     results = []
     start_word_len = len(start_words)
     input = t.Tensor([word2ix['<START>']]).view(1, 1).long()
-    if opt.use_gpu: input = input.cuda()
     hidden = None
 
     index = 0  # 用来指示已经生成了多少句藏头诗
@@ -137,9 +134,6 @@ def train(**kwargs):
     if opt.model_path:
         model.load_state_dict(t.load(opt.model_path))
 
-    if opt.use_gpu:
-        model.cuda()
-        criterion.cuda()
     loss_meter = meter.AverageValueMeter()
 
     for epoch in range(opt.epoch):
@@ -148,7 +142,6 @@ def train(**kwargs):
 
             # 训练
             data_ = data_.long().transpose(1, 0).contiguous()
-            if opt.use_gpu: data_ = data_.cuda()
             optimizer.zero_grad()
             input_, target = data_[:-1, :], data_[1:, :]
             output, _ = model(input_)
@@ -176,8 +169,6 @@ def gen(**kwargs):
     state_dict = t.load(opt.model_path, map_location=map_location)
     model.load_state_dict(state_dict)
 
-    if opt.use_gpu:
-        model.cuda()
     if sys.version_info.major == 3:
         if opt.start_words.isprintable():
             start_words = opt.start_words

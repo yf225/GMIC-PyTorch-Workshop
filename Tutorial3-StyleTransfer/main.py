@@ -134,13 +134,15 @@ def stylize(**kwargs):
         )
 
     # 在Visdom中显示迁移前图片
+    print(content_image.shape)
     vis.image(
-        content_image,
+        content_image.cpu().data.squeeze(0),
         win='original',
         opts=dict(title='原图片')
         )
 
     # 在Visdom中显示迁移后图片
+    print(output_image.shape)
     vis.image(
         output_image,
         win='transformed',

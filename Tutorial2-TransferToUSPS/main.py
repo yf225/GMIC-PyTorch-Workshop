@@ -42,7 +42,7 @@ def plot_loss_curve(epoch, loss, accuracy):
     vis.line(
         X = np.column_stack(([epoch], [epoch])),
         Y = np.column_stack(([loss], [accuracy])),
-        win = 'loss_curve',
+        win = 'loss_curve_' + args.fine_tuning_on_mnist,
         opts = dict(
             title='USPS loss curve, fine tune: ' + args.fine_tuning_on_mnist,
             legend=['Loss', 'Accuracy'],
