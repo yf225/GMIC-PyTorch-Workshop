@@ -6,83 +6,93 @@ import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.autograd import Variable
 import sys
+import numpy as np
+from visdom import Visdom
 from model import MNISTNet
+
 
 # Training settings
 parser = argparse.ArgumentParser(description='PyTorch MNIST Example')
-parser.add_argument('--batch-size', type=int, default=64, metavar='N',
-                    help='input batch size for training (default: 64)')
-parser.add_argument('--test-batch-size', type=int, default=1000, metavar='N',
-                    help='input batch size for testing (default: 1000)')
 parser.add_argument('--epochs', type=int, default=10, metavar='N',
                     help='number of epochs to train (default: 10)')
-parser.add_argument('--lr', type=float, default=0.01, metavar='LR',
-                    help='learning rate (default: 0.01)')
-parser.add_argument('--momentum', type=float, default=0.5, metavar='M',
-                    help='SGD momentum (default: 0.5)')
-parser.add_argument('--no-cuda', action='store_true', default=False,
-                    help='disables CUDA training')
-parser.add_argument('--seed', type=int, default=1, metavar='S',
-                    help='random seed (default: 1)')
-parser.add_argument('--log-interval', type=int, default=10, metavar='N',
-                    help='how many batches to wait before logging training status')
-parser.add_argument('--no-log', action='store_true', default=False, help='disables logging')
+parser.add_argument('--max-batches-per-epoch', type=int, default=sys.maxsize,
+                    help='maximum number of batches to use for each epoch (default: sys.maxsize)')
 args = parser.parse_args()
-args.cuda = not args.no_cuda and torch.cuda.is_available()
 
-torch.manual_seed(args.seed)
-if args.cuda:
-    torch.cuda.manual_seed(args.seed)
-
-
-kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 train_loader = torch.utils.data.DataLoader(
     datasets.MNIST('data', train=True, download=True,
                    transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
                    ])),
-    batch_size=args.batch_size, shuffle=True, **kwargs)
+    batch_size=64, shuffle=True)
 test_loader = torch.utils.data.DataLoader(
     datasets.MNIST('data', train=False, transform=transforms.Compose([
                        transforms.ToTensor(),
                        transforms.Normalize((0.1307,), (0.3081,))
                    ])),
-    batch_size=args.test_batch_size, shuffle=True, **kwargs)
+    batch_size=1000, shuffle=True)
 
 model = MNISTNet()
-if args.cuda:
-    model.cuda()
 
-optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum)
+optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
+
+vis = Visdom()
+
+loss_window = None
+loss_window_opts=dict(
+    title='MNIST loss curve',
+    legend=['Loss', 'Accuracy'],
+    xtickmin=0,
+    xtickmax=args.epochs,
+    xtickstep=0.01,
+    ytickmin=0,
+    ytickmax=3,
+    ytickstep=0.01
+)
+
+def plot_loss_curve(epoch, loss, accuracy):
+    global loss_window
+    if not loss_window:
+        loss_window = vis.line(
+            X = np.column_stack(([epoch], [epoch])),
+            Y = np.column_stack(([loss], [accuracy])),
+            opts=loss_window_opts
+            )
+    else:
+        vis.line(
+            X = np.column_stack(([epoch], [epoch])),
+            Y = np.column_stack(([loss], [accuracy])),
+            win=loss_window,
+            update='append',
+            opts=loss_window_opts
+            )
 
 def train(epoch):
     model.train()
     num_batches = 0
     for batch_idx, (data, target) in enumerate(train_loader):
-        if args.cuda:
-            data, target = data.cuda(), target.cuda()
         data, target = Variable(data), Variable(target)
         optimizer.zero_grad()
         output = model(data)
         loss = F.nll_loss(output, target)
         loss.backward()
         optimizer.step()
-        if not args.no_log:
-            if batch_idx % args.log_interval == 0:
-                print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
-                    epoch, batch_idx * len(data), len(train_loader.dataset),
-                    100. * batch_idx / len(train_loader), float(loss)))
+        if batch_idx % 10 == 0:
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
+                epoch, batch_idx * len(data), len(train_loader.dataset),
+                100. * batch_idx / len(train_loader), float(loss)))
         num_batches += 1
+        # If we want to visualize the shape of the loss curve better, we can train for less batches per epoch
+        if num_batches > args.max_batches_per_epoch:
+            break
     torch.save(model.state_dict(), 'checkpoints/mnist_%s.pth' % (epoch, ))
 
-def test():
+def test(epoch):
     model.eval()
     test_loss = 0
     correct = 0
     for data, target in test_loader:
-        if args.cuda:
-            data, target = data.cuda(), target.cuda()
         data, target = Variable(data), Variable(target)
         with torch.no_grad():
             output = model(data)
@@ -91,12 +101,14 @@ def test():
             correct += int(pred.eq(target.data.view_as(pred)).cpu().long().sum())
 
     test_loss /= len(test_loader.dataset)
-    if not args.no_log:
-        print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
-            test_loss, correct, len(test_loader.dataset),
-            100. * correct / len(test_loader.dataset)))
+    accuracy = correct * 1.0 / len(test_loader.dataset)
+    print('\nTest set: Average loss: {:.4f}, Accuracy: {}/{} ({:.0f}%)\n'.format(
+        test_loss, correct, len(test_loader.dataset),
+        100. * accuracy))
 
+    plot_loss_curve(epoch, test_loss, accuracy)
+    
 
 for epoch in range(1, args.epochs + 1):
     train(epoch)
-    test()
+    test(epoch)
