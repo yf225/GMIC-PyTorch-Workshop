@@ -14,13 +14,13 @@ class TransformerNet(nn.Module):
         # 下卷积层
         self.initial_layers = nn.Sequential(
             ConvLayer(3, 32, kernel_size=9, stride=1),
-            nn.InstanceNorm2d(32, affine=True),
+            nn.InstanceNorm2d(32, affine=True, track_running_stats=True),
             nn.ReLU(True),
             ConvLayer(32, 64, kernel_size=3, stride=2),
-            nn.InstanceNorm2d(64, affine=True),
+            nn.InstanceNorm2d(64, affine=True, track_running_stats=True),
             nn.ReLU(True),
             ConvLayer(64, 128, kernel_size=3, stride=2),
-            nn.InstanceNorm2d(128, affine=True),
+            nn.InstanceNorm2d(128, affine=True, track_running_stats=True),
             nn.ReLU(True),
         )
 
@@ -36,10 +36,10 @@ class TransformerNet(nn.Module):
         # Upsampling Layers(上卷积层)
         self.upsample_layers = nn.Sequential(
             UpsampleConvLayer(128, 64, kernel_size=3, stride=1, upsample=2),
-            nn.InstanceNorm2d(64, affine=True),
+            nn.InstanceNorm2d(64, affine=True, track_running_stats=True),
             nn.ReLU(True),
             UpsampleConvLayer(64, 32, kernel_size=3, stride=1, upsample=2),
-            nn.InstanceNorm2d(32, affine=True),
+            nn.InstanceNorm2d(32, affine=True, track_running_stats=True),
             nn.ReLU(True),
             ConvLayer(32, 3, kernel_size=9, stride=1)
         )
@@ -103,9 +103,9 @@ class ResidualBlock(nn.Module):
     def __init__(self, channels):
         super(ResidualBlock, self).__init__()
         self.conv1 = ConvLayer(channels, channels, kernel_size=3, stride=1)
-        self.in1 = nn.InstanceNorm2d(channels, affine=True)
+        self.in1 = nn.InstanceNorm2d(channels, affine=True, track_running_stats=True)
         self.conv2 = ConvLayer(channels, channels, kernel_size=3, stride=1)
-        self.in2 = nn.InstanceNorm2d(channels, affine=True)
+        self.in2 = nn.InstanceNorm2d(channels, affine=True, track_running_stats=True)
         self.relu = nn.ReLU()
 
     def forward(self, x):

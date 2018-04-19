@@ -4,7 +4,6 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
-from torch.autograd import Variable
 import sys
 import numpy as np
 from visdom import Visdom
@@ -39,40 +38,28 @@ optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.5)
 
 vis = Visdom()
 
-loss_window = None
-loss_window_opts=dict(
-    title='MNIST loss curve',
-    legend=['Loss', 'Accuracy'],
-    xtickmin=0,
-    xtickmax=args.epochs,
-    xtickstep=0.01,
-    ytickmin=0,
-    ytickmax=3,
-    ytickstep=0.01
-)
-
 def plot_loss_curve(epoch, loss, accuracy):
-    global loss_window
-    if not loss_window:
-        loss_window = vis.line(
-            X = np.column_stack(([epoch], [epoch])),
-            Y = np.column_stack(([loss], [accuracy])),
-            opts=loss_window_opts
-            )
-    else:
-        vis.line(
-            X = np.column_stack(([epoch], [epoch])),
-            Y = np.column_stack(([loss], [accuracy])),
-            win=loss_window,
-            update='append',
-            opts=loss_window_opts
-            )
+    vis.line(
+        X = np.column_stack(([epoch], [epoch])),
+        Y = np.column_stack(([loss], [accuracy])),
+        win = 'loss_curve',
+        opts = dict(
+            title='MNIST loss curve',
+            legend=['Loss', 'Accuracy'],
+            xtickmin=0,
+            xtickmax=args.epochs,
+            xtickstep=0.01,
+            ytickmin=0,
+            ytickmax=3,
+            ytickstep=0.01
+        ),
+        update = None if epoch == 1 else 'append'
+    )
 
 def train(epoch):
     model.train()
     num_batches = 0
     for batch_idx, (data, target) in enumerate(train_loader):
-        data, target = Variable(data), Variable(target)
         optimizer.zero_grad()
         output = model(data)
         loss = F.nll_loss(output, target)
@@ -93,7 +80,6 @@ def test(epoch):
     test_loss = 0
     correct = 0
     for data, target in test_loader:
-        data, target = Variable(data), Variable(target)
         with torch.no_grad():
             output = model(data)
             test_loss += float(F.nll_loss(output, target, size_average=False)) # sum up batch loss

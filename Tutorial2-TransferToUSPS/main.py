@@ -5,7 +5,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
-from torch.autograd import Variable
 import sys
 from dataset.usps import USPS
 import numpy as np
@@ -39,34 +38,23 @@ optimizer = optim.SGD(layers_to_tune.parameters(), lr=0.01, momentum=0.5)
 
 vis = Visdom()
 
-loss_window = None
-loss_window_opts=dict(
-    title='USPS loss curve - fine tune: ' + args.fine_tuning_on_mnist,
-    legend=['Loss', 'Accuracy'],
-    xtickmin=0,
-    xtickmax=args.epochs,
-    xtickstep=0.01,
-    ytickmin=0,
-    ytickmax=2,
-    ytickstep=0.01
-)
-
 def plot_loss_curve(epoch, loss, accuracy):
-    global loss_window
-    if not loss_window:
-        loss_window = vis.line(
-            X = np.column_stack(([epoch], [epoch])),
-            Y = np.column_stack(([loss], [accuracy])),
-            opts=loss_window_opts
-            )
-    else:
-        vis.line(
-            X = np.column_stack(([epoch], [epoch])),
-            Y = np.column_stack(([loss], [accuracy])),
-            win=loss_window,
-            update='append',
-            opts=loss_window_opts
-            )
+    vis.line(
+        X = np.column_stack(([epoch], [epoch])),
+        Y = np.column_stack(([loss], [accuracy])),
+        win = 'loss_curve',
+        opts = dict(
+            title='USPS loss curve, fine tune: ' + args.fine_tuning_on_mnist,
+            legend=['Loss', 'Accuracy'],
+            xtickmin=0,
+            xtickmax=args.epochs,
+            xtickstep=0.01,
+            ytickmin=0,
+            ytickmax=2,
+            ytickstep=0.01
+        ),
+        update = None if epoch == 1 else 'append'
+    )
 
 # image pre-processing
 pre_process = transforms.Compose([transforms.ToTensor(),
@@ -98,7 +86,7 @@ def train(epoch):
     model.train()
     num_batches = 0
     for batch_idx, (data, target) in enumerate(train_loader):
-        data, target = Variable(data), Variable(target.reshape(-1))
+        target = target.reshape(-1)
         optimizer.zero_grad()
         output = model(data)
         loss = F.nll_loss(output, target)
@@ -117,7 +105,7 @@ def test(epoch):
     test_loss = 0
     correct = 0
     for data, target in test_loader:
-        data, target = Variable(data), Variable(target.reshape(-1))
+        target = target.reshape(-1)
         with torch.no_grad():
             output = model(data)
             test_loss += float(F.nll_loss(output, target, size_average=False)) # sum up batch loss
