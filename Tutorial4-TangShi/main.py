@@ -9,7 +9,6 @@ from torchnet import meter
 
 
 class Config(object):
-    data_path = 'data/'  # 诗歌的文本文件存放路径
     pickle_path = 'tang.npz'  # 预处理好的二进制文件
     author = None  # 只学习某位作者的诗歌
     constrain = None  # 长度限制
