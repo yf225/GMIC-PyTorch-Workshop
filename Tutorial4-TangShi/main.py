@@ -4,7 +4,6 @@ import torch as t
 from data import get_data
 from model import PoetryModel
 from torch import nn
-import tqdm
 from torchnet import meter
 
 
@@ -137,7 +136,7 @@ def train(**kwargs):
 
     for epoch in range(opt.epoch):
         loss_meter.reset()
-        for ii, data_ in tqdm.tqdm(enumerate(dataloader)):
+        for ii, data_ in enumerate(dataloader):
 
             # 训练
             data_ = data_.long().transpose(1, 0).contiguous()
