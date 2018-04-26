@@ -1,7 +1,7 @@
 """Dataset setting and data loader for USPS.
 
 Modified from
-https://github.com/mingyuliutw/CoGAN/blob/master/cogan_pytorch/src/dataset_usps.py
+hhttps://github.com/corenel/pytorch-adda/blob/master/datasets/usps.py (authored by Yusu Pan @corenel)
 """
 
 import gzip
@@ -57,7 +57,7 @@ class USPS(data.Dataset):
             self.train_labels = self.train_labels[indices[0:self.dataset_size]]
         self.train_data *= 255.0
         self.train_data = self.train_data.transpose(
-            (0, 2, 3, 1))  # convert to HWC
+            (0, 2, 3, 1)).astype(np.uint8)  # convert to HWC
 
     def __getitem__(self, index):
         """Get images and target for data loader.
@@ -110,25 +110,3 @@ class USPS(data.Dataset):
             labels = data_set[1][1]
             self.dataset_size = labels.shape[0]
         return images, labels
-
-
-# def get_usps(train):
-#     """Get USPS dataset loader."""
-#     # image pre-processing
-#     pre_process = transforms.Compose([transforms.ToTensor(),
-#                                       transforms.Normalize(
-#                                           mean=(0.5, 0.5, 0.5),
-#                                           std=(0.5, 0.5, 0.5))])
-
-#     # dataset and data loader
-#     usps_dataset = USPS(root=params.data_root,
-#                         train=train,
-#                         transform=pre_process,
-#                         download=True)
-
-#     usps_data_loader = torch.utils.data.DataLoader(
-#         dataset=usps_dataset,
-#         batch_size=params.batch_size,
-#         shuffle=True)
-
-#     return usps_data_loader
